@@ -1,0 +1,27 @@
+api:
+  dashboard: true
+  insecure: true
+
+# Writing Logs to a File, in JSON
+log:
+  level: INFO
+
+entryPoints:
+  http:
+    address: ":80"
+  https:
+    address: ":443"
+  traefik:
+    address: ":8080"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+
+certificatesResolvers:
+  http:
+    acme:
+      email: myemail@yourdomain.com
+      storage: acme.json
+      tlsChallenge: true

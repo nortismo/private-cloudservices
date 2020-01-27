@@ -1,0 +1,45 @@
+version: "2.0"
+
+services:
+  traefik:
+    image: traefik:v2.1.1
+    command:
+      - --providers.docker
+      - --api
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    networks:
+      - web
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/traefik/traefik.yml:/traefik.yml:ro
+      - /opt/traefik/acme.json:/acme.json
+    logging:
+      options:
+        max-size: "12m"
+        max-file: "5"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=http"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.yourwebsite.com`)"
+      - "traefik.http.routers.api.middlewares=auth"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=user:passwordInHash"
+      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+      - "traefik.http.routers.traefik-secure.entrypoints=https"
+      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.yourwebsite.com`)"
+      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik-secure.tls=true"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=http"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+
+    container_name: traefik
+
+networks:
+  web:
+    external: true
